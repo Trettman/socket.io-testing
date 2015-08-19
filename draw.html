@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+        <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    </head>
+    <body style="background-color: grey;">
+        <canvas id="drawing_canvas" width="600" height="600" style="background-color: white;"></canvas>
+    </body>
+    <script>
+    
+        var socket = io();
+    
+        var canvas = document.getElementById("drawing_canvas");
+        var ctx = canvas.getContext("2d");
+        var isMouseDown = 0;
+        
+        var pen = {};
+        
+        function drawLine(x1, y1, x2, y2){
+            
+            ctx.beginPath();
+            ctx.moveTo(x1, y1)
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        }
+        
+        $("#drawing_canvas").mousedown(function(event){
+            isMouseDown = 1;
+            pen.x = event.clientX;
+            pen.y = event.clientY;
+        }).mouseup(function(){
+            isMouseDown = 0;
+        });
+        
+        $("#drawing_canvas").mousemove(function(event){
+            if(isMouseDown){
+                x = event.clientX;
+                y = event.clientY;
+                
+                var data = {
+                    x1: x,
+                    y1: y,
+                    x2: pen.x,
+                    y2: pen.y
+                };
+                
+                //Sends the information through the socket
+                socket.emit("line", data);
+                
+                //Draws the line locally
+                drawLine(pen.x, pen.y, x, y);
+                
+                pen.x = x;
+                pen.y = y;
+            }    
+        });
+        
+        socket.on("line", function(data){
+            drawLine(data.x1, data.y1, data.x2, data.y2);
+        });
+        
+    </script>
+</html>
